@@ -6,7 +6,7 @@
 
     <groupId>org.tahmasebi</groupId>
     <artifactId>jmx</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>

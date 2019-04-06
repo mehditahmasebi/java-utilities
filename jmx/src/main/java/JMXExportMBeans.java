@@ -1,9 +1,6 @@
 import sun.management.ConnectorAddressLink;
 
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -37,53 +34,13 @@ public class JMXExportMBeans {
 
             for (int i = 0; i < domains.length; i++) {
                 for (ObjectName mbeanName : names) {
-                    if (mbeanName.getDomain().equals(domains[i])) {
-                        MBeanInfo mbeanInfo = connection.getMBeanInfo(mbeanName);
-
-                        if (mbeanInfo.getAttributes() != null && mbeanInfo.getAttributes().length > 0) {
-
-                            if (!domains[i].equals(lastDomain)) {
-
-                                // get current domain
-                                lastDomain = domains[i];
-
-                                // print separator
-                                echo("___________________________");
-
-                                // domain
-                                echo(domains[i]);
-
-                            }
-
-                            // object name
-                            String type = mbeanName.toString().substring(mbeanName.toString().lastIndexOf("type") + 5);
-
-                            if (!type.contains("name")) {
-                                // type
-                                echo("\t" + type);
-                                // attributes
-                                echo("\t\tAttributes");
-                                for (MBeanAttributeInfo mBeanAttributeInfo : mbeanInfo.getAttributes()) {
-                                    printAttributesKeyValues(mBeanAttributeInfo, "\t\t\t");
-                                }
-
-                            } else {
-                                // get name
-                                String name = type.substring(type.lastIndexOf("name") + 5);
-
-                                // type
-                                echo("\t" + type.substring(0, type.lastIndexOf("name") - 1));
-
-                                // name
-                                echo("\t\t" + name);
-
-                                // attributes
-                                echo("\t\t\tAttributes");
-                                for (MBeanAttributeInfo mBeanAttributeInfo : mbeanInfo.getAttributes()) {
-                                    printAttributesKeyValues(mBeanAttributeInfo, "\t\t\t\t");
-                                }
-                            }
-                        }
+                    MBeanInfo mbeanInfo = connection.getMBeanInfo(mbeanName);
+                    echo("");
+                    echo("["+mbeanName.getDomain()+"]["+ mbeanName.toString()+"]");
+                    // attributes
+                    echo("\tAttributes("+mbeanInfo.getAttributes().length+")");
+                    for (MBeanAttributeInfo mBeanAttributeInfo : mbeanInfo.getAttributes()) {
+                        printAttributesKeyValues(connection,mbeanName,mBeanAttributeInfo, "\t\t");
                     }
                 }
             }
@@ -158,14 +115,20 @@ public class JMXExportMBeans {
         }
     }
 
-    private static void printAttributesKeyValues(MBeanAttributeInfo mBeanAttributeInfo, String spaces) {
-        echo(spaces + mBeanAttributeInfo.getName());
-        echo(spaces + "\t - Name -> " + mBeanAttributeInfo.getName());
-        echo(spaces + "\t - Description -> " + mBeanAttributeInfo.getDescription());
-        echo(spaces + "\t - Readable -> " + mBeanAttributeInfo.isReadable());
-        echo(spaces + "\t - Writable -> " + mBeanAttributeInfo.isWritable());
-        echo(spaces + "\t - Is -> " + mBeanAttributeInfo.isIs());
-        echo(spaces + "\t - Type -> " + mBeanAttributeInfo.getType());
+    private static void printAttributesKeyValues(MBeanServerConnection connection,
+                                                 ObjectName mbeanName,
+                                                 MBeanAttributeInfo mBeanAttributeInfo,
+                                                 String spaces) {
+        echo(spaces + mBeanAttributeInfo.getName() + " ---- ["+mBeanAttributeInfo.getDescription()+
+                " - readable : " + mBeanAttributeInfo.isReadable() +
+                " - writable : " + mBeanAttributeInfo.isWritable() +
+                " - type : " + mBeanAttributeInfo.getType() +
+                "]");
+        try {
+            echo(spaces + "\t :: Value = " + connection.getAttribute(mbeanName,mBeanAttributeInfo.getName()));
+        } catch (Exception e) {
+            echo(spaces + "\t :: Value = Exception occured");
+        }
     }
 
     private static void echo(String s) {
